@@ -1,0 +1,65 @@
+{
+  "$schema": "https://www.getbifrost.ai/schema",
+  "providers": {
+    "openai": {
+      "keys": [
+        { "name": "openai-primary", "value": "env.OPENAI_KEY_1", "models": ["gpt-4o", "gpt-4o-mini"], "weight": 2.0 },
+        { "name": "openai-secondary", "value": "env.OPENAI_KEY_2", "models": ["gpt-4o-mini", "o4-mini"], "weight": 1.0 },
+        { "name": "openai-batch", "value": "env.OPENAI_KEY_BATCH", "models": ["*"], "weight": 1.0, "use_for_batch_api": true }
+      ],
+      "network_config": {
+        "default_request_timeout_in_seconds": 120,
+        "max_retries": 3,
+        "retry_backoff_initial": 500,
+        "retry_backoff_max": 5000
+      },
+      "concurrency_and_buffer_size": { "concurrency": 100, "buffer_size": 500 }
+    },
+    "azure": {
+      "keys": [
+        {
+          "name": "eastus",
+          "value": "env.AZURE_KEY_EAST",
+          "models": ["gpt-4o"],
+          "weight": 1.0,
+          "aliases": { "gpt-4o": "gpt-4o-prod-deployment" },
+          "azure_key_config": { "endpoint": "env.AZURE_ENDPOINT_EAST" }
+        },
+        {
+          "name": "westus",
+          "value": "env.AZURE_KEY_WEST",
+          "models": ["gpt-4o"],
+          "weight": 1.0,
+          "azure_key_config": { "endpoint": "env.AZURE_ENDPOINT_WEST" }
+        }
+      ]
+    },
+    "anthropic": {
+      "keys": [
+        { "name": "anthropic-primary", "value": "env.ANTHROPIC_API_KEY", "models": ["claude-sonnet-4-5", "claude-haiku-4-5"], "weight": 1.0 }
+      ],
+      "network_config": { "default_request_timeout_in_seconds": 180 }
+    }
+  },
+  "governance": {
+    "routing_rules": [
+      {
+        "id": "route-gpt4o-to-azure",
+        "name": "Redirect GPT-4o to Azure",
+        "cel_expression": "request.model == 'gpt-4o'",
+        "targets": [ { "provider": "azure", "model": "gpt-4o", "weight": 1.0 } ],
+        "fallbacks": [ "openai/gpt-4o", "anthropic/claude-sonnet-4-5" ],
+        "priority": 1
+      },
+      {
+        "id": "route-cost-split",
+        "name": "Split traffic 70/30 between providers",
+        "cel_expression": "true",
+        "targets": [
+          { "provider": "openai", "weight": 0.7 },
+          { "provider": "anthropic", "weight": 0.3 }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "providers": {
+    "openai": {
+      "keys": [
+        {
+          "name": "openai-main",
+          "value": "env.OPENAI_API_KEY",
+          "models": ["gpt-4o", "gpt-4o-mini", "best-model", "regex:^o[0-9]-mini$"],
+          "blacklisted_models": ["gpt-4o-mini"],
+          "weight": 1.0,
+          "aliases": {
+            "best-model": "gpt-4o-2024-11-20",
+            "fast-model": { "model_id": "gpt-4o-mini", "description": "not on the key's models" }
+          }
+        }
+      ]
+    },
+    "gemini": {
+      "keys": [ { "name": "gemini-primary", "value": "env.GEMINI_API_KEY", "models": ["*"], "blacklisted_models": ["gemini-1.5-pro"], "weight": 1.0 } ]
+    },
+    "deepseek": {
+      "keys": [ { "name": "deepseek-main", "value": "env.DEEPSEEK_API_KEY", "models": [], "weight": 1.0 } ]
+    },
+    "xai": {
+      "keys": [ { "name": "xai-main", "value": "env.XAI_API_KEY", "models": ["grok-4"], "weight": 1.0 } ]
+    },
+    "openrouter": {
+      "keys": [ { "name": "openrouter-main", "value": "env.OPENROUTER_API_KEY", "models": ["*"], "weight": 1.0 } ]
+    }
+  }
+}

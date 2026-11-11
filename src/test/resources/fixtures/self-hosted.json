@@ -1,0 +1,41 @@
+{
+  "$schema": "https://www.getbifrost.ai/schema",
+  "providers": {
+    "ollama": {
+      "keys": [
+        { "name": "ollama-local", "value": "", "models": ["llama3.1", "qwen2.5"], "weight": 1.0,
+          "ollama_key_config": { "url": "http://localhost:11434" } }
+      ]
+    },
+    "vllm": {
+      "keys": [
+        { "name": "vllm-llama3-70b", "value": "", "models": ["llama-3-70b"], "weight": 1.0,
+          "vllm_key_config": { "url": "http://vllm-server:8000", "model_name": "meta-llama/Meta-Llama-3-70B-Instruct" } },
+        { "name": "vllm-mistral", "value": "", "models": ["mistral-7b"], "weight": 1.0,
+          "vllm_key_config": { "url": "http://vllm-mistral:8000", "model_name": "mistralai/Mistral-7B-Instruct-v0.3" } }
+      ]
+    },
+    "acme-llm": {
+      "custom_provider_config": { "base_provider_type": "openai" },
+      "network_config": { "base_url": "https://llm.acme.example/v1" },
+      "keys": [ { "name": "acme", "value": "env.ACME_KEY", "models": ["*"], "weight": 1.0 } ]
+    },
+    "bedrock": {
+      "keys": [
+        { "name": "bedrock-static", "value": "", "models": ["anthropic.claude-3-5-sonnet-20240620-v1:0"], "weight": 1.0,
+          "bedrock_key_config": { "region": "us-east-1", "access_key": "env.AWS_ACCESS_KEY_ID", "secret_key": "env.AWS_SECRET_ACCESS_KEY" },
+          "aliases": { "claude-sonnet": "us.anthropic.claude-3-5-sonnet-20241022-v2:0" } }
+      ]
+    },
+    "vertex": {
+      "keys": [
+        { "name": "vertex-sa", "value": "", "models": ["*"], "weight": 1.0,
+          "vertex_key_config": { "project_id": "env.VERTEX_PROJECT_ID", "region": "us-central1", "auth_credentials": "env.VERTEX_AUTH_CREDENTIALS" } }
+      ]
+    },
+    "mistral": {
+      "keys": [ { "name": "mistral-primary", "value": "env.MISTRAL_API_KEY", "models": ["mistral-large-latest"], "weight": 1.0 } ],
+      "network_config": { "base_url": "https://mistral.internal.example" }
+    }
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "$schema": "https://www.getbifrost.ai/schema",
+  "encryption_key": "LITERAL-ENCRYPTION-0003",
+  "setup_token": "LITERAL-SETUP-TOKEN-0012",
+  "client": {
+    "drop_excess_requests": false,
+    "initial_pool_size": 300,
+    "enable_logging": true,
+    "disable_content_logging": false,
+    "enforce_auth_on_inference": true,
+    "allowed_origins": ["https://app.example.com"],
+    "prometheus_labels": ["team"],
+    "max_request_body_size_mb": 100
+  },
+  "config_store": {
+    "enabled": true,
+    "type": "postgres",
+    "config": { "host": "db", "port": "5432", "user": "bifrost", "password": "LITERAL-PG-PASSWORD-0002", "db_name": "bifrost", "ssl_mode": "disable" }
+  },
+  "logs_store": {
+    "enabled": true,
+    "type": "postgres",
+    "config": { "host": "db", "port": "5432", "user": "bifrost", "password": "LITERAL-PG-PASSWORD-0002", "db_name": "bifrost", "ssl_mode": "disable" }
+  },
+  "vector_store": { "enabled": true, "type": "weaviate", "config": { "scheme": "http", "host": "weaviate:8080" } },
+  "providers": {
+    "openai": {
+      "keys": [
+        { "id": "openai-prod", "name": "openai-prod", "value": "sk-proj-LITERAL-OPENAI-SECRET-0001", "models": ["gpt-4o", "gpt-4o-mini"], "weight": 1.0 }
+      ],
+      "network_config": {
+        "base_url": "https://svc:LITERAL-URL-SECRET-0008@llm-proxy.corp.example?token=LITERAL-URL-SECRET-0008",
+        "extra_headers": { "X-Corp-Auth": "LITERAL-HEADER-SECRET-0006" },
+        "max_retries": 2
+      },
+      "proxy_config": { "type": "http", "url": "http://proxy.corp.example:3128", "username": "proxy", "password": "LITERAL-PROXY-PASSWORD-0007" }
+    },
+    "anthropic": {
+      "keys": [ { "id": "anthropic-prod", "name": "anthropic-prod", "value": "env.ANTHROPIC_API_KEY", "models": ["*"], "weight": 1.0 } ]
+    },
+    "bedrock": {
+      "keys": [
+        { "name": "bedrock-static", "value": "", "models": ["*"], "weight": 1.0,
+          "bedrock_key_config": { "region": "eu-west-1", "access_key": "env.AWS_ACCESS_KEY_ID", "secret_key": "LITERAL-AWS-SECRET-0011", "session_token": "env.AWS_SESSION_TOKEN" } }
+      ]
+    }
+  },
+  "governance": {
+    "auth_config": { "is_enabled": true, "admin_username": "admin", "admin_password": "LITERAL-ADMIN-PASSWORD-0004", "disable_auth_on_inference": false },
+    "virtual_keys": [
+      {
+        "id": "vk-team-platform",
+        "name": "platform-team",
+        "value": "env.VK_PLATFORM_TEAM",
+        "is_active": true,
+        "team_id": "team-ml",
+        "rate_limit_id": "rl-platform-hourly",
+        "provider_configs": [
+          { "provider": "openai", "allowed_models": ["gpt-4o", "gpt-4o-mini"], "key_ids": ["*"], "weight": 1 },
+          { "provider": "anthropic", "allowed_models": ["claude-sonnet-4-5"], "key_ids": ["*"], "weight": 1 }
+        ]
+      },
+      {
+        "id": "vk-support-bot",
+        "name": "support-bot",
+        "value": "sk-bf-LITERAL-VK-SECRET-0005",
+        "provider_configs": [
+          { "provider": "openai", "allowed_models": ["gpt-4o-mini"], "key_ids": ["openai-prod"] }
+        ]
+      },
+      {
+        "id": "vk-all",
+        "name": "all-providers",
+        "allow_all_providers": true
+      },
+      {
+        "id": "vk-retired",
+        "name": "retired",
+        "is_active": false,
+        "provider_configs": [ { "provider": "openai", "allowed_models": ["*"], "key_ids": ["*"] } ]
+      },
+      {
+        "id": "vk-nothing",
+        "name": "nothing",
+        "provider_configs": []
+      }
+    ],
+    "budgets": [
+      { "id": "budget-team-ml", "max_limit": 500.00, "reset_duration": "1M", "team_id": "team-ml" }
+    ],
+    "rate_limits": [
+      { "id": "rl-platform-hourly", "request_max_limit": 6000, "request_reset_duration": "1h", "token_max_limit": 1000000, "token_reset_duration": "1h" },
+      { "id": "rl-ml-minute", "request_max_limit": 60, "request_reset_duration": "1m" },
+      { "id": "rl-unused", "request_max_limit": 10, "request_reset_duration": "1m" }
+    ],
+    "customers": [ { "id": "customer-acme", "name": "Acme Corp" } ],
+    "teams": [ { "id": "team-ml", "name": "ML Team", "customer_id": "customer-acme", "rate_limit_id": "rl-ml-minute" } ],
+    "model_configs": [ { "id": "mc-gpt4o-global", "model_name": "gpt-4o", "provider": "openai", "budget_id": "budget-team-ml" } ]
+  },
+  "plugins": [
+    { "enabled": true, "name": "semantic_cache", "config": { "dimension": 1536, "vector_store_namespace": "bifrost" } },
+    { "enabled": true, "name": "otel", "config": { "service_name": "bifrost", "collector_url": "http://otel:4318/v1/traces", "trace_type": "genai_extension", "protocol": "http", "headers": { "Authorization": "LITERAL-OTEL-SECRET-0009" } } },
+    { "enabled": true, "name": "maxim", "config": { "api_key": "env.MAXIM_API_KEY", "log_repo_id": "repo" } },
+    { "enabled": false, "name": "datadog", "config": {} }
+  ],
+  "guardrails_config": {
+    "guardrail_providers": [
+      { "id": 1, "provider_name": "secrets", "policy_name": "block-leaked-credentials", "enabled": true, "timeout": 5,
+        "config": { "action": "redact", "redaction_strategy": "replace", "redaction_mode": "logs_only" } },
+      { "id": 2, "provider_name": "lakera", "policy_name": "prompt-injection", "enabled": true, "timeout": 5,
+        "config": { "api_key": "LITERAL-GUARDRAIL-SECRET-0010" } },
+      { "id": 3, "provider_name": "grayswan", "policy_name": "jailbreaks", "enabled": true, "timeout": 5, "config": {} }
+    ],
+    "guardrail_rules": [
+      { "id": 101, "name": "block-secrets-input", "enabled": true, "cel_expression": "true", "apply_to": "input", "sampling_rate": 100, "timeout": 10, "provider_config_ids": [1, 2] }
+    ]
+  },
+  "mcp": { "client_configs": [ { "name": "github", "connection_type": "http", "connection_string": "https://api.githubcopilot.com/mcp" } ] },
+  "cluster_config": { "enabled": false }
+}

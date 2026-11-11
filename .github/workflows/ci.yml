@@ -1,0 +1,25 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+      - name: Tests and runnable jar
+        run: ./mvnw -B verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dvara-bifrost-importer
+          path: target/dvara-bifrost-importer.jar
+          if-no-files-found: error

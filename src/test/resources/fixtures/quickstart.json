@@ -1,0 +1,20 @@
+{
+  "$schema": "https://www.getbifrost.ai/schema",
+  "providers": {
+    "openai": {
+      "keys": [
+        { "name": "openai-primary", "value": "env.OPENAI_API_KEY", "models": ["*"], "weight": 2.0 }
+      ]
+    },
+    "anthropic": {
+      "keys": [
+        { "name": "anthropic-primary", "value": "env.ANTHROPIC_API_KEY", "models": ["*"], "weight": 1.0 }
+      ]
+    },
+    "groq": {
+      "keys": [
+        { "name": "groq-primary", "value": "env.GROQ_API_KEY", "models": ["*"], "weight": 1.0 }
+      ]
+    }
+  }
+}
